@@ -12,7 +12,7 @@ namespace TeamWork
             while (true)
             {
                 Console.WriteLine("Enter the time in minutes for the worker to draw 1 picture:");
-                string input = Console.ReadLine();
+                string input = Console.ReadLine() ?? string.Empty;
 
                 if (string.IsNullOrEmpty(input) && workers.Count > 0)
                 {
@@ -42,17 +42,17 @@ namespace TeamWork
                 {
                     i++;
                     Console.WriteLine("Worker #" + i + ":");
-                    Console.WriteLine("Worker speed: " + worker.GetCapacity() + " images per minute");
+                    Console.WriteLine("Worker speed: " + Math.Round(worker.GetCapacity(), 3) + " images per minute");
                     Console.WriteLine("Worker processed images: " + worker.GetProcessedImages());
+                    Console.WriteLine("Readines of the last image in progress: " + worker.PictureReadiness);
                     Console.WriteLine("Worker processed images by approximate time: " + worker.GetProcessedImagesByApproximateTime());
                     Console.WriteLine("\n");
-
                 }
 
                 Console.WriteLine("The brigade processed " +
                  brigade.GetProcessedImages() +
-                 " image(s) for " + brigade.GetTime() + " minutes.");
-                Console.WriteLine("The brigade processed " + brigade.GetProcessedImagesByApproximateTime() + " image(s) for " + brigade.GetApproximateTime() + " minutes.");
+                 " image(s) for " + Math.Round(brigade.GetTime(), 3) + " minutes.");
+                Console.WriteLine("The brigade processed " + brigade.GetProcessedImagesByApproximateTime() + " image(s) for approximate time: " + Math.Round(brigade.GetApproximateTime(), 3) + " minutes.");
 
             }
             else
@@ -69,7 +69,7 @@ namespace TeamWork
         private decimal Speed;
         private int ProcessedImages;
         private int ProcessedImagesByApproximateTime;
-        private decimal PictureReadiness;
+        public decimal PictureReadiness;
 
         public Worker(decimal speed)
         {
@@ -89,7 +89,11 @@ namespace TeamWork
 
         public int CalculateProcessedImages(decimal time)
         {
-            return (int)Math.Floor(time * this.Capacity);
+            decimal processedImages = Math.Round(time * this.Capacity, 3);
+            this.PictureReadiness = processedImages - Math.Truncate(processedImages);
+
+            return (int)Math.Floor(processedImages);
+
         }
 
         // Getter methods
@@ -131,6 +135,7 @@ namespace TeamWork
         {
             this.Workers = workers;
             this.BrigadeCapacity = CalculateBrigadeCapacity();
+            this.PosibleRealTimes = new List<decimal>();
         }
 
         public void CalculateImagesProcessing(int imagesNumber)
@@ -169,7 +174,6 @@ namespace TeamWork
             HashSet<decimal> posibleRealTimes = new HashSet<decimal>();
             if (this.UnfinishedImages == 0)
             {
-                this.PosibleRealTimes = new List<decimal>();
                 return;
             }
 
@@ -203,8 +207,6 @@ namespace TeamWork
 
         public void CalculateRealTime()
         {
-            Console.WriteLine("Unfinished images: " + this.UnfinishedImages);
-            Console.WriteLine("Workers count: " + this.GetWorkers().Count);
             int processedImages;
             if (this.UnfinishedImages == 0)
             {
@@ -216,8 +218,6 @@ namespace TeamWork
 
             foreach (decimal posibleRealTime in this.PosibleRealTimes)
             {
-                Console.WriteLine("Posible Real time: " + posibleRealTime);
-
                 processedImages = CalculateBrigadeProcessedImages(posibleRealTime);
                 if (processedImages >= this.DesiredImagesNumber)
                 {
@@ -266,6 +266,11 @@ namespace TeamWork
         public decimal GetProcessedImagesByApproximateTime()
         {
             return this.ProcessedImagesByBrigadeAtApproximateTime;
+        }
+
+        public int GetUnfinishedImages()
+        {
+            return this.UnfinishedImages;
         }
     }
 }
